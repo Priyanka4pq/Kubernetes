@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: payment-api
+  namespace: payments
+  labels:
+    app: payment-api
+    tier: backend
+
+spec:
+  replicas: 4
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+
+  selector:
+    matchLabels:
+      app: payment-api
+      tier: backend
+
+  template:
+    metadata:
+      labels:
+        app: payment-api
+        tier: backend
+
+    spec:
+      containers:
+        - name: backend-img
+          image: cloudnova/payment-api:1.8
+
+          ports:
+            - containerPort: 9000
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          envFrom:
+            - configMapRef:
+                name: payment-config
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: payment-config
+  namespace: payments
+
+data:
+  LOG_LEVEL: "info"
+  PAYMENT_MODE: "production"
